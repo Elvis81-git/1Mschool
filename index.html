@@ -74,20 +74,37 @@
         .ladder-item.active { background: #f39c12; color: #fff; font-size: 26px; font-weight: bold; box-shadow: 0 0 15px #f39c12; }
         .ladder-item.passed { color: #f1c40f; }
 
-        /* Modal 彈出視窗 */
+        /* Modal 彈出視窗 (遊戲結束) */
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); display: none; align-items: center; justify-content: center; z-index: 2000; }
         .modal-content { background: #fff; color: #333; padding: 40px; border-radius: 15px; width: 500px; text-align: center; box-shadow: 0 0 30px rgba(255,255,255,0.2); }
         .modal-content h2 { font-size: 32px; margin-top: 0; }
         .score-display { font-size: 48px; color: #e74c3c; font-weight: bold; margin: 20px 0; }
         
-        .bar-container { display: flex; align-items: flex-end; justify-content: space-around; height: 200px; margin-top: 20px; border-bottom: 2px solid #ccc; padding-bottom: 5px;}
-        .bar-wrapper { display: flex; flex-direction: column; align-items: center; width: 50px; }
-        .bar { width: 100%; background: #3498db; border-radius: 5px 5px 0 0; transition: height 1s ease-out; }
-        .bar-label { margin-top: 10px; font-weight: bold; font-size: 20px;}
-        .bar-pct { font-size: 16px; margin-bottom: 5px; font-weight: bold; color: #e67e22;}
+        /* 全螢幕半透明倒數特效 */
+        .countdown-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.75); display: none;
+            align-items: center; justify-content: center; z-index: 3000;
+            font-size: 350px; font-weight: bold; color: #f1c40f;
+            text-shadow: 0 0 50px #f39c12; backdrop-filter: blur(8px);
+            user-select: none;
+        }
+        .countdown-overlay.active { display: flex; }
+        .countdown-anim { animation: pulsePop 1s ease-in-out infinite; }
+        
+        @keyframes pulsePop {
+            0% { transform: scale(0.3); opacity: 0; }
+            40% { transform: scale(1.2); opacity: 1; }
+            70% { transform: scale(1); opacity: 1; }
+            100% { transform: scale(0.8); opacity: 0; }
+        }
     </style>
 </head>
 <body>
+
+    <div id="countdownOverlay" class="countdown-overlay">
+        <span id="countdownNumber">5</span>
+    </div>
 
     <div class="game-area">
         <div class="header">
@@ -95,7 +112,7 @@
             <div class="lifelines">
                 <button id="card-callout" class="card-btn" onclick="useCallOut()">📞 Call Out</button>
                 <button id="card-5050" class="card-btn" onclick="use5050()">✂️ 刪去法</button>
-                <button id="card-vote" class="card-btn" onclick="useVote()">📊 投票</button>
+                <button id="card-vote" class="card-btn" onclick="useVote()">🙋‍♂️ 現場投票</button>
                 <button id="bailoutBtn" class="card-btn btn-bailout" onclick="confirmBailout()">🛑 放棄作答</button>
             </div>
         </div>
@@ -114,14 +131,6 @@
     <div class="sidebar">
         <h3 class="ladder-title">💰 點數階梯</h3>
         <ul class="ladder-list" id="ladderList"></ul>
-    </div>
-
-    <div id="voteModal" class="modal-overlay">
-        <div class="modal-content">
-            <h2 style="color: #2980b9;">📊 現場投票統計</h2>
-            <div class="bar-container" id="voteBars"></div>
-            <button class="card-btn" style="margin-top: 30px; background: #e74c3c; border-color:#c0392b; width: 100%;" onclick="closeModal('voteModal')">關閉結果</button>
-        </div>
     </div>
 
     <div id="gameOverModal" class="modal-overlay">
@@ -193,7 +202,6 @@
         updateLadderUI();
         document.getElementById('bailoutBtn').disabled = false;
         
-        // 重置動態按鈕
         const actionBtn = document.getElementById('actionBtn');
         actionBtn.innerText = "請先選擇一個選項";
         actionBtn.className = "btn-action";
@@ -222,20 +230,17 @@
         gameState = 'selected';
         selectedOptionIndex = selectedIndex;
 
-        // 清除其他選項的高亮，並高亮當前點選
         const allOpts = document.querySelectorAll('.option-box');
         allOpts.forEach(el => el.classList.remove('selected'));
         
         const selectedEl = document.getElementById('opt-' + selectedIndex);
         if (selectedEl) selectedEl.classList.add('selected');
 
-        // 開啟鎖定按鈕權限
         const actionBtn = document.getElementById('actionBtn');
         actionBtn.innerText = "確認鎖定答案 🔒";
         actionBtn.disabled = false;
     }
 
-    // 處理底部的多功能大按鈕點擊
     function handleActionClick() {
         if (gameState === 'selected') {
             startLockCountdown();
@@ -244,29 +249,45 @@
         }
     }
 
-    // 開始 5 秒鎖定倒數
+    // 開始 5 秒全螢幕倒數
     function startLockCountdown() {
         gameState = 'counting';
-        document.getElementById('bailoutBtn').disabled = true; // 鎖定中不允許中途放棄
+        document.getElementById('bailoutBtn').disabled = true; 
         
-        // 變更選項外觀為「節目鎖定色」
         const selectedEl = document.getElementById('opt-' + selectedOptionIndex);
         if (selectedEl) {
             selectedEl.classList.remove('selected');
             selectedEl.classList.add('locked-style');
         }
 
-        let secondsLeft = 5;
         const actionBtn = document.getElementById('actionBtn');
-        actionBtn.disabled = true; // 倒數期間不能連點
-        actionBtn.innerText = `🤔 鎖定中... ${secondsLeft} 秒`;
+        actionBtn.disabled = true;
+        actionBtn.innerText = "🤔 鎖定中...";
+
+        // 啟動全螢幕倒數遮罩
+        const overlay = document.getElementById('countdownOverlay');
+        const numEl = document.getElementById('countdownNumber');
+        overlay.classList.add('active');
+        
+        let secondsLeft = 5;
+        numEl.innerText = secondsLeft;
+        
+        // 重新觸發 CSS 動畫的技巧
+        numEl.classList.remove('countdown-anim');
+        void numEl.offsetWidth; 
+        numEl.classList.add('countdown-anim');
 
         let countdownTimer = setInterval(() => {
             secondsLeft--;
             if (secondsLeft > 0) {
-                actionBtn.innerText = `🤔 鎖定中... ${secondsLeft} 秒`;
+                numEl.innerText = secondsLeft;
+                // 每秒重新觸發跳動動畫
+                numEl.classList.remove('countdown-anim');
+                void numEl.offsetWidth; 
+                numEl.classList.add('countdown-anim');
             } else {
                 clearInterval(countdownTimer);
+                overlay.classList.remove('active'); // 倒數結束，隱藏遮罩
                 revealAnswer();
             }
         }, 1000);
@@ -302,12 +323,10 @@
             actionBtn.innerText = "挑戰失敗 🛑";
             actionBtn.disabled = true;
             
-            // 延遲 2.5 秒後直接切入失敗結算畫面
             setTimeout(() => endGame('wrong'), 2500);
         }
     }
 
-    // 放棄作答結算
     function confirmBailout() {
         if (gameState !== 'selecting' && gameState !== 'selected') return;
         if (confirm("確定要放棄作答嗎？結算將獲得「上一題點數的一半」！")) {
@@ -315,7 +334,6 @@
         }
     }
 
-    // 遊戲結束結算
     function endGame(reason) {
         const modal = document.getElementById('gameOverModal');
         const title = document.getElementById('endGameTitle');
@@ -347,7 +365,7 @@
         modal.style.display = 'flex';
     }
 
-    // --- 卡牌救濟機制 (限制只能在選答案階段使用) ---
+    // --- 卡牌救濟機制 ---
     function useCallOut() {
         if (gameState !== 'selecting' && gameState !== 'selected') return;
         const btn = document.getElementById('card-callout');
@@ -376,46 +394,8 @@
         if (btn.disabled) return;
         btn.disabled = true; btn.classList.add('used');
         
-        const correctIndex = questions[currentIndex].answer;
-        let votes = [0, 0, 0, 0];
-        let remaining = 100;
-        
-        votes[correctIndex] = Math.floor(Math.random() * 31) + 40; 
-        remaining -= votes[correctIndex];
-
-        let wrongIndices = [0, 1, 2, 3].filter(i => i !== correctIndex);
-        wrongIndices.forEach((idx, i) => {
-            const el = document.getElementById('opt-' + idx);
-            if (el && el.classList.contains('hidden-opt')) {
-                votes[idx] = 0; 
-            } else if (i === wrongIndices.length - 1) {
-                votes[idx] = remaining; 
-            } else {
-                let r = Math.floor(Math.random() * (remaining + 1));
-                votes[idx] = r;
-                remaining -= r;
-            }
-        });
-
-        const labels = ['A', 'B', 'C', 'D'];
-        const container = document.getElementById('voteBars');
-        container.innerHTML = '';
-        votes.forEach((pct, idx) => {
-            container.innerHTML += `
-                <div class="bar-wrapper">
-                    <div class="bar-pct">${pct}%</div>
-                    <div class="bar" style="height: 0px;" data-target="${pct * 1.5}px"></div>
-                    <div class="bar-label">${labels[idx]}</div>
-                </div>
-            `;
-        });
-
-        document.getElementById('voteModal').style.display = 'flex';
-        setTimeout(() => {
-            document.querySelectorAll('.bar').forEach(b => {
-                b.style.height = b.getAttribute('data-target');
-            });
-        }, 100);
+        // 簡單的提示窗取代複雜的圖表
+        alert("🙋‍♂️ 啟動現場投票！請現場玩家一起舉手投票，再由挑戰者自行決定最終答案！");
     }
 
     function closeModal(id) {
