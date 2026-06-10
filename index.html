@@ -39,19 +39,33 @@
         .question-container { flex: 1; display: flex; align-items: center; justify-content: center; padding: 10px; }
         .question-box { width: 100%; background: rgba(0, 30, 80, 0.8); border: 3px solid #f1c40f; border-radius: 20px; padding: 35px; font-size: 32px; line-height: 1.5; box-shadow: 0 0 20px rgba(241, 196, 15, 0.3); text-align: left; white-space: pre-wrap; }
 
-        /* 底部：選項區 */
-        .options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; padding: 0 20px 20px 20px; }
+        /* 中下：選項區 */
+        .options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; padding: 0 20px 10px 20px; }
         .option-box {
             background: linear-gradient(90deg, #1abc9c, #16a085); border: 2px solid #a3e4d7; border-radius: 50px;
             padding: 15px 25px; font-size: 24px; cursor: pointer; text-align: left; transition: 0.3s;
         }
         .option-box:hover { background: linear-gradient(90deg, #16a085, #0e6655); transform: scale(1.02); }
-        .option-box.selected { background: #f39c12; border-color: #f1c40f; color: #fff; }
+        
+        /* 選項互動狀態 */
+        .option-box.selected { background: #34495e; border-color: #3498db; color: #fff; box-shadow: 0 0 15px #3498db; }
+        .option-box.locked-style { background: #f39c12; border-color: #f1c40f; color: #fff; }
         .option-box.correct { background: #27ae60; border-color: #2ecc71; color: #fff; animation: blink 0.5s 3; }
         .option-box.wrong { background: #c0392b; border-color: #e74c3c; color: #fff; }
         .option-box.hidden-opt { visibility: hidden; }
 
         @keyframes blink { 50% { opacity: 0.5; } }
+
+        /* 底部：動態互動按鈕區 */
+        .action-container { margin-bottom: 25px; padding: 0 20px; }
+        .btn-action {
+            font-size: 26px; padding: 15px 50px; border-radius: 50px; font-weight: bold; cursor: pointer; transition: 0.3s; width: 100%; max-width: 500px;
+            background: linear-gradient(135deg, #f1c40f, #f39c12); border: 2px solid #fbc02d; color: #0a1930; box-shadow: 0 4px 15px rgba(241, 196, 15, 0.4);
+        }
+        .btn-action:hover { transform: scale(1.03); background: linear-gradient(135deg, #f39c12, #e67e22); }
+        .btn-action:disabled { background: #444; border-color: #222; color: #888; cursor: not-allowed; transform: none; box-shadow: none; }
+        .btn-action.next-stage { background: linear-gradient(135deg, #2ecc71, #27ae60); border-color: #a3e4d7; color: white; box-shadow: 0 4px 15px rgba(46, 204, 113, 0.4); }
+        .btn-action.next-stage:hover { background: linear-gradient(135deg, #27ae60, #1e8449); }
 
         /* 獎金階梯區 */
         .ladder-title { font-size: 24px; color: #3498db; margin-top: 0; border-bottom: 2px solid #3498db; padding-bottom: 10px;}
@@ -60,7 +74,7 @@
         .ladder-item.active { background: #f39c12; color: #fff; font-size: 26px; font-weight: bold; box-shadow: 0 0 15px #f39c12; }
         .ladder-item.passed { color: #f1c40f; }
 
-        /* Modal 彈出視窗 (投票 & 遊戲結束) */
+        /* Modal 彈出視窗 */
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); display: none; align-items: center; justify-content: center; z-index: 2000; }
         .modal-content { background: #fff; color: #333; padding: 40px; border-radius: 15px; width: 500px; text-align: center; box-shadow: 0 0 30px rgba(255,255,255,0.2); }
         .modal-content h2 { font-size: 32px; margin-top: 0; }
@@ -82,7 +96,7 @@
                 <button id="card-callout" class="card-btn" onclick="useCallOut()">📞 Call Out</button>
                 <button id="card-5050" class="card-btn" onclick="use5050()">✂️ 刪去法</button>
                 <button id="card-vote" class="card-btn" onclick="useVote()">📊 投票</button>
-                <button class="card-btn btn-bailout" onclick="confirmBailout()">🛑 放棄作答</button>
+                <button id="bailoutBtn" class="card-btn btn-bailout" onclick="confirmBailout()">🛑 放棄作答</button>
             </div>
         </div>
 
@@ -91,12 +105,15 @@
         </div>
 
         <div class="options-grid" id="optionsContainer"></div>
+
+        <div class="action-container">
+            <button id="actionBtn" class="btn-action" onclick="handleActionClick()" disabled>請先選擇一個選項</button>
+        </div>
     </div>
 
     <div class="sidebar">
         <h3 class="ladder-title">💰 點數階梯</h3>
-        <ul class="ladder-list" id="ladderList">
-            </ul>
+        <ul class="ladder-list" id="ladderList"></ul>
     </div>
 
     <div id="voteModal" class="modal-overlay">
@@ -119,19 +136,20 @@
 <script>
     let questions = [];
     let currentIndex = 0;
-    let isAnswering = false; 
+    
+    // 遊戲狀態控制：'selecting' (選題中), 'selected' (已選未鎖), 'counting' (倒數中), 'revealed' (已公布結果)
+    let gameState = 'selecting'; 
+    let selectedOptionIndex = null;
 
-    // 自訂的點數階梯 (10題)
     const prizePoints = [1, 2, 3, 5, 8, 13, 21, 34, 55, 100];
     
-    // 初始化遊戲
     async function initGame() {
         try {
             const res = await fetch('./db.json');
             if (!res.ok) throw new Error('找不到題庫');
             let allQuestions = await res.json();
             
-            // 隨機打亂題庫，並抽取前 10 題
+            // 隨機抽取 10 題
             questions = allQuestions.sort(() => 0.5 - Math.random()).slice(0, 10);
             
             renderLadder();
@@ -141,7 +159,6 @@
         }
     }
 
-    // 渲染右側點數階梯
     function renderLadder() {
         const list = document.getElementById('ladderList');
         list.innerHTML = '';
@@ -154,7 +171,6 @@
         });
     }
 
-    // 更新階梯高亮狀態
     function updateLadderUI() {
         prizePoints.forEach((pts, i) => {
             const li = document.getElementById('ladder-' + i);
@@ -164,17 +180,25 @@
         });
     }
 
-    // 載入題目
     function loadQuestion(index) {
         if (index >= questions.length || index >= 10) {
-            endGame('win'); // 通關！
+            endGame('win');
             return;
         }
 
         currentIndex = index;
-        updateLadderUI();
-        isAnswering = true;
+        selectedOptionIndex = null;
+        gameState = 'selecting';
         
+        updateLadderUI();
+        document.getElementById('bailoutBtn').disabled = false;
+        
+        // 重置動態按鈕
+        const actionBtn = document.getElementById('actionBtn');
+        actionBtn.innerText = "請先選擇一個選項";
+        actionBtn.className = "btn-action";
+        actionBtn.disabled = true;
+
         const q = questions[currentIndex];
         document.getElementById('questionText').innerText = q.question;
         
@@ -191,44 +215,107 @@
         });
     }
 
-    // 玩家選擇答案
+    // 點擊選項
     function selectOption(selectedIndex) {
-        if (!isAnswering) return; 
-        isAnswering = false; // 鎖死按鈕
-
-        const correctIndex = questions[currentIndex].answer;
-        const selectedEl = document.getElementById('opt-' + selectedIndex);
+        if (gameState !== 'selecting' && gameState !== 'selected') return;
         
-        // 營造緊張感，先變黃色
-        selectedEl.classList.add('selected');
+        gameState = 'selected';
+        selectedOptionIndex = selectedIndex;
 
-        // 停頓 2 秒後公布解答
-        setTimeout(() => {
-            selectedEl.classList.remove('selected');
-            
-            if (selectedIndex === correctIndex) {
-                // ✅ 答對
-                selectedEl.classList.add('correct');
-                setTimeout(() => loadQuestion(currentIndex + 1), 2500); // 2.5秒後自動下一題
-            } else {
-                // ❌ 答錯
-                selectedEl.classList.add('wrong');
-                document.getElementById('opt-' + correctIndex).classList.add('correct');
-                setTimeout(() => endGame('wrong'), 2500);
-            }
-        }, 2000);
+        // 清除其他選項的高亮，並高亮當前點選
+        const allOpts = document.querySelectorAll('.option-box');
+        allOpts.forEach(el => el.classList.remove('selected'));
+        
+        const selectedEl = document.getElementById('opt-' + selectedIndex);
+        if (selectedEl) selectedEl.classList.add('selected');
+
+        // 開啟鎖定按鈕權限
+        const actionBtn = document.getElementById('actionBtn');
+        actionBtn.innerText = "確認鎖定答案 🔒";
+        actionBtn.disabled = false;
     }
 
-    // --- 放棄作答與結算邏輯 ---
+    // 處理底部的多功能大按鈕點擊
+    function handleActionClick() {
+        if (gameState === 'selected') {
+            startLockCountdown();
+        } else if (gameState === 'revealed') {
+            loadQuestion(currentIndex + 1);
+        }
+    }
+
+    // 開始 5 秒鎖定倒數
+    function startLockCountdown() {
+        gameState = 'counting';
+        document.getElementById('bailoutBtn').disabled = true; // 鎖定中不允許中途放棄
+        
+        // 變更選項外觀為「節目鎖定色」
+        const selectedEl = document.getElementById('opt-' + selectedOptionIndex);
+        if (selectedEl) {
+            selectedEl.classList.remove('selected');
+            selectedEl.classList.add('locked-style');
+        }
+
+        let secondsLeft = 5;
+        const actionBtn = document.getElementById('actionBtn');
+        actionBtn.disabled = true; // 倒數期間不能連點
+        actionBtn.innerText = `🤔 鎖定中... ${secondsLeft} 秒`;
+
+        let countdownTimer = setInterval(() => {
+            secondsLeft--;
+            if (secondsLeft > 0) {
+                actionBtn.innerText = `🤔 鎖定中... ${secondsLeft} 秒`;
+            } else {
+                clearInterval(countdownTimer);
+                revealAnswer();
+            }
+        }, 1000);
+    }
+
+    // 公布解答
+    function revealAnswer() {
+        gameState = 'revealed';
+        const correctIndex = questions[currentIndex].answer;
+        const selectedEl = document.getElementById('opt-' + selectedOptionIndex);
+        const actionBtn = document.getElementById('actionBtn');
+        
+        if (selectedEl) selectedEl.classList.remove('locked-style');
+        
+        if (selectedOptionIndex === correctIndex) {
+            // ✅ 答對
+            if (selectedEl) selectedEl.classList.add('correct');
+            actionBtn.disabled = false;
+            actionBtn.className = "btn-action next-stage";
+            
+            if (currentIndex === 9) {
+                actionBtn.innerText = "👑 通關成功！查看終極結算 🏆";
+                actionBtn.onclick = () => endGame('win');
+            } else {
+                actionBtn.innerText = "答對了！進入下一題 ➡️";
+            }
+        } else {
+            // ❌ 答錯
+            if (selectedEl) selectedEl.classList.add('wrong');
+            const correctEl = document.getElementById('opt-' + correctIndex);
+            if (correctEl) correctEl.classList.add('correct');
+            
+            actionBtn.innerText = "挑戰失敗 🛑";
+            actionBtn.disabled = true;
+            
+            // 延遲 2.5 秒後直接切入失敗結算畫面
+            setTimeout(() => endGame('wrong'), 2500);
+        }
+    }
+
+    // 放棄作答結算
     function confirmBailout() {
-        if (!isAnswering) return;
+        if (gameState !== 'selecting' && gameState !== 'selected') return;
         if (confirm("確定要放棄作答嗎？結算將獲得「上一題點數的一半」！")) {
-            isAnswering = false;
             endGame('bailout');
         }
     }
 
-    // 遊戲結束處理
+    // 遊戲結束結算
     function endGame(reason) {
         const modal = document.getElementById('gameOverModal');
         const title = document.getElementById('endGameTitle');
@@ -243,7 +330,6 @@
             msg.innerText = "太神啦！您成功答對所有題目，抱走最高點數：";
             finalPoints = 100;
         } else {
-            // 答錯或放棄作答：獲得前一題點數除以2
             let previousPoints = currentIndex === 0 ? 0 : prizePoints[currentIndex - 1];
             finalPoints = previousPoints / 2;
             
@@ -257,13 +343,13 @@
             }
         }
 
-        scoreText.innerText = finalPoints % 1 !== 0 ? finalPoints.toFixed(1) : finalPoints; // 處理小數點
+        scoreText.innerText = finalPoints % 1 !== 0 ? finalPoints.toFixed(1) : finalPoints; 
         modal.style.display = 'flex';
     }
 
-    // --- 卡牌功能區 ---
+    // --- 卡牌救濟機制 (限制只能在選答案階段使用) ---
     function useCallOut() {
-        if(!isAnswering) return;
+        if (gameState !== 'selecting' && gameState !== 'selected') return;
         const btn = document.getElementById('card-callout');
         if (btn.disabled) return;
         btn.disabled = true; btn.classList.add('used');
@@ -271,7 +357,7 @@
     }
 
     function use5050() {
-        if(!isAnswering) return;
+        if (gameState !== 'selecting' && gameState !== 'selected') return;
         const btn = document.getElementById('card-5050');
         if (btn.disabled) return;
         btn.disabled = true; btn.classList.add('used');
@@ -285,7 +371,7 @@
     }
 
     function useVote() {
-        if(!isAnswering) return;
+        if (gameState !== 'selecting' && gameState !== 'selected') return;
         const btn = document.getElementById('card-vote');
         if (btn.disabled) return;
         btn.disabled = true; btn.classList.add('used');
@@ -294,7 +380,6 @@
         let votes = [0, 0, 0, 0];
         let remaining = 100;
         
-        // 正確答案隨機拿 40~70% 的票
         votes[correctIndex] = Math.floor(Math.random() * 31) + 40; 
         remaining -= votes[correctIndex];
 
@@ -302,7 +387,7 @@
         wrongIndices.forEach((idx, i) => {
             const el = document.getElementById('opt-' + idx);
             if (el && el.classList.contains('hidden-opt')) {
-                votes[idx] = 0; // 被刪去的選項得票為0
+                votes[idx] = 0; 
             } else if (i === wrongIndices.length - 1) {
                 votes[idx] = remaining; 
             } else {
@@ -337,7 +422,6 @@
         document.getElementById(id).style.display = 'none';
     }
 
-    // 啟動遊戲
     initGame();
 </script>
 </body>
