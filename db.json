@@ -2,106 +2,71 @@
   {
     "id": 1,
     "type": "multiple_choice",
-    "question": "1. 小恩在進行3D列印軟體的設定時，不小心把填充密度設定的太低了，請問他的模型最有可能發生下列哪一種情形？",
-    "options": ["(A) 穿崩", "(B) 翹邊", "(C) 列印的第一層無法附著", "(D) 列印層錯位"],
-    "answer": 0
+    "question": "世界上只有幾%的錢是實體現金",
+    "options": ["(A) 70~72%", "(B) 8~10%", "(C) 50~52%", "(D) 30~32%"],
+    "answer": 1
   },
   {
     "id": 2,
     "type": "multiple_choice",
-    "question": "2. 若想列印實心的3D列印成品，則可將填充密度設定為多少？",
-    "options": ["(A) 0%", "(B) 50%", "(C) 100%", "(D) 200%"],
+    "question": "目前世界紀錄一張紙最多可以折幾次",
+    "options": ["(A) 7", "(B) 10", "(C) 13", "(D) 15"],
     "answer": 2
   },
   {
     "id": 3,
     "type": "multiple_choice",
-    "question": "3. 繪製草圖時，我們可以使用下列哪一種常見的圖來標示呈現立體圖形？",
-    "options": ["(A) 全視圖", "(B) 俯視圖", "(C) 三視圖", "(D) 全景圖"],
+    "question": "注音符號ㄅㄆㄇ不含聲調符號的話總共有幾個?",
+    "options": ["(A) 26", "(B) 36", "(C) 37", "(D) 41"],
     "answer": 2
   },
   {
     "id": 4,
     "type": "multiple_choice",
-    "question": "4. 下列何者不是游標卡尺可以測量的數據？",
-    "options": ["(A) 物體的長度", "(B) 物體的深度", "(C) 物體的內徑", "(D) 物體的弧度"],
+    "question": "世界上許多人口住在北半球，請問佔了多少比例?",
+    "options": ["(A) 50", "(B) 65", "(C) 85", "(D) 90"],
     "answer": 3
   },
   {
     "id": 5,
     "type": "multiple_choice",
-    "question": "5. 使用下列何者較適合對列印出來的3D成品進行打磨？",
-    "options": ["(A) 影印紙", "(B) 砂紙", "(C) 美工刀", "(D) 剪刀"],
+    "question": "世界總人口目前大約為多少人?",
+    "options": ["(A) 73.5億", "(B) 82.8億", "(C) 86.1億", "(D) 71.5億"],
     "answer": 1
   },
   {
     "id": 6,
     "type": "multiple_choice",
-    "question": "6. 3D列印如果想印較精細的模型，下列哪種噴嘴最適合？",
-    "options": ["(A) 0.2 mm", "(B) 0.4 mm", "(C) 0.8 mm", "(D) 2 cm"],
-    "answer": 0
+    "question": "台灣目前經常性薪資中位數最接近下列何者?",
+    "options": ["(A) 30,000元", "(B) 40,000元", "(C) 55,000元", "(D) 35,000元"],
+    "answer": 1
   },
   {
     "id": 7,
     "type": "multiple_choice",
-    "question": "7. 傳統電影跟動畫通常1秒有多少個幀？",
-    "options": ["(A) 12", "(B) 24", "(C) 30", "(D) 60"],
-    "answer": 1
+    "question": "第一代iphone對世界造成非常大的影響，請問第一代iphone誕生於西元?",
+    "options": ["(A) 2007", "(B) 2009", "(C) 2010", "(D) 2012"],
+    "answer": 0
   },
   {
     "id": 8,
     "type": "multiple_choice",
-    "question": "8. 使用上課教的動畫軟體時，我們製作的動畫人物會被歸類在哪個選項？",
-    "options": ["(A) 特點", "(B) 財產", "(C) BG", "(D) 元素"],
-    "answer": 0
+    "question": "海水佔了地球表面約?",
+    "options": ["(A) 50%", "(B) 60%", "(C) 70%", "(D) 75%"],
+    "answer": 2
   },
   {
     "id": 9,
     "type": "multiple_choice",
-    "question": "9. 使用上課教的動畫軟體時，內建的背景在哪個選項？",
-    "options": ["(A) 特點", "(B) 財產", "(C) BG", "(D) 元素"],
-    "answer": 2
+    "question": "台灣土地面積大概是多少平方公里?",
+    "options": ["(A) 3.6 萬平方公里", "(B) 3.2 萬平方公里", "(C) 3.9 萬平方公里", "(D) 4.6 萬平方公里"],
+    "answer": 0
   },
   {
     "id": 10,
     "type": "multiple_choice",
-    "question": "10. 使用上課教的動畫軟體時，想讓人物從A點移動至B點需要點選哪個選項？",
-    "options": ["(A) 行動", "(B) 行動加", "(C) 動畫", "(D) 以上皆非"],
-    "answer": 1
-  },
-  {
-    "id": 11,
-    "type": "multiple_choice",
-    "question": "11. 使用上課教的動畫軟體時，場景跟場景中間的特效稱之為？",
-    "options": ["(A) 過渡特效", "(B) 動畫", "(C) 轉換", "(D) 以上皆非"],
-    "answer": 0
-  },
-  {
-    "id": 12,
-    "type": "multiple_choice",
-    "question": "12. 使用上課教的動畫軟體時，想將人物表情更換，要點選何者？",
-    "options": ["(A) 動作", "(B) 行動", "(C) 行動加", "(D) 表達式"],
-    "answer": 3
-  },
-  {
-    "id": 13,
-    "type": "multiple_choice",
-    "question": "13. 使用上課教的動畫軟體時，只想編輯當前場景要點選下列何者？",
-    "options": ["(A) 場景時間線", "(B) 總體時間表", "(C) 動畫", "(D) 以上皆非"],
-    "answer": 0
-  },
-  {
-    "id": 14,
-    "type": "multiple_choice",
-    "question": "14. 下列何者不是3D模型在列印時可能會發生翹邊的情況？",
-    "options": ["(A) 列印物底部面積太小", "(B) 列印物底部尖角較少", "(C) 列印環境溫度太低", "(D) 填充密度設定太高時"],
-    "answer": 1
-  },
-  {
-    "id": 15,
-    "type": "multiple_choice",
-    "question": "15. 下列是製作損壞物品零件的數個步驟：\na.以3D電腦繪圖軟體將物品零件的模型繪製出來\nb.利用列印出來的零件將損壞的物品修復\nc.評估此零件需要承受的力量強度\nd.選用合適的列印材料進行列印\ne.對物品零件進行準確的測量，並繪製草圖。\n順序應為下列何者較為恰當？",
-    "options": ["(A) eacdb", "(B) abcde", "(C) eabcd", "(D) edbac"],
-    "answer": 0
+    "question": "101大樓的高度為?",
+    "options": ["(A) 308M", "(B) 408M", "(C) 508M", "(D) 608M"],
+    "answer": 2
   }
 ]
