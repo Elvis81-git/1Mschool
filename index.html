@@ -158,8 +158,8 @@
             if (!res.ok) throw new Error('找不到題庫');
             let allQuestions = await res.json();
             
-            // 隨機抽取 10 題
-            questions = allQuestions.sort(() => 0.5 - Math.random()).slice(0, 10);
+            // 【修改為依序出題】不再隨機打亂，直接按照 db.json 裡面的順序抓取前 10 題
+            questions = allQuestions.slice(0, 10);
             
             renderLadder();
             loadQuestion(0);
@@ -394,12 +394,7 @@
         if (btn.disabled) return;
         btn.disabled = true; btn.classList.add('used');
         
-        // 簡單的提示窗取代複雜的圖表
         alert("🙋‍♂️ 啟動現場投票！請現場玩家一起舉手投票，再由挑戰者自行決定最終答案！");
-    }
-
-    function closeModal(id) {
-        document.getElementById(id).style.display = 'none';
     }
 
     initGame();
